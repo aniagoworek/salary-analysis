@@ -63,25 +63,30 @@ df_without_y = df_numeric[df_numeric['Variable'] != 'wynagrodzenia']
 X = df_without_y.sort_values(by='Variable')
 # print(X)
 
-# create random division of column indexes into training and test sets
+# create random division of y and X into training and test sets
 np.random.seed(73)
-total_columns = X.shape[1] - 2  # number of columns in data frame X without column of variables and dates
-indices = np.arange(2, total_columns + 2)  # indexes of columns with data, without first column of variables and dates
-np.random.shuffle(indices)  # index shuffling
+num_sets = 30 # number of training and test sets
+
+total_columns = X.shape[1] - 2  # number of columns in X without column of variables and dates
 train_size = int(0.75 * total_columns)
 
-# division of the indexes into 30 training and test sets
-train_indices_list = [indices[i:i+train_size] for i in range(0, total_columns, train_size)]
-test_indices_list = [np.setdiff1d(indices, train_indices) for train_indices in train_indices_list]
+train_indices_list = []
+test_indices_list = []
+
+for _ in range(num_sets):
+    train_indices = np.random.choice(total_columns, train_size, replace=True)
+    test_indices = np.setdiff1d(np.arange(total_columns), train_indices)
+    
+    train_indices_list.append(train_indices)
+    test_indices_list.append(test_indices)
 
 # create 30 training and test sets for y and X
-train_y_list = [y.iloc[:, train_indices.tolist()] for train_indices in train_indices_list]
-test_y_list = [y.iloc[:, test_indices.tolist()] for test_indices in test_indices_list]
-train_X_list = [X.iloc[:, train_indices.tolist()] for train_indices in train_indices_list]
-test_X_list = [X.iloc[:, test_indices.tolist()] for test_indices in test_indices_list]
-
-print(train_X_list[0])
-print(train_y_list[0])
+train_y_list = [y.iloc[:, train_indices] for train_indices in train_indices_list]
+test_y_list = [y.iloc[:, test_indices] for test_indices in test_indices_list]
+train_X_list = [X.iloc[:, train_indices] for train_indices in train_indices_list]
+test_X_list = [X.iloc[:, test_indices] for test_indices in test_indices_list]
+# print(train_X_list[9])
+# print(train_y_list[0])
 
 # save training and test sets into pickle files
 folder_path = "training_and_test_sets"
