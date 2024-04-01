@@ -13,17 +13,17 @@ dates_row = data[1][2:]
 dates = pd.to_datetime(dates_row, format='%Y')
 df = pd.DataFrame(data[1:], columns=variables)
 df_transposed = df.transpose()
+# print(df)
 
 df_transposed.insert(0, 'Variables', df_transposed.index)
 df_transposed.reset_index(drop=True, inplace=True)
 df_transposed = df_transposed.iloc[1:] # delete unneccesary row
 df_transposed.reset_index(drop=True, inplace=True)
-print(df_transposed) 
+# print(df_transposed) 
 
 # conversion of regions into indexes
 df_transposed.columns = df_transposed.iloc[0] #first row as the column header
-df_transposed.index = df_transposed.index.rename('Variables') #first column as a side index
-df_transposed = df_transposed.iloc[1:] #delete the first row that has become the column header
+df_transposed = df_transposed.iloc[1:] # delete the first row that has become the column header
 # print(df_transposed)
 
 df_transposed.rename(columns={'Nazwa': 'Variable'}, inplace=True)
@@ -41,16 +41,42 @@ def convert_to_numeric(value):
 df_numeric = df_transposed.applymap(convert_to_numeric)
 df_numeric['Variable'] = df_numeric['Variable'].astype('category')
 df_numeric['Year'] = pd.to_datetime(df_numeric['Year'], format='%Y')
-print(df_numeric)
+# print(df_numeric)
+# print("Data types:")
+# print(df_numeric.dtypes)
 
-print("Data types:")
-print(df_numeric.dtypes)
+# save places, years and variables
+places = df_numeric.index.unique(level=0)
+years = df_numeric['Year']
+variables = df_numeric['Variable']
+print(df_numeric)
 
 # add y
 y = df_numeric.loc[df_numeric.iloc[:, 0] == "wynagrodzenia"]
-print(y)
+# print(y)
+# print(y.drop('Year', axis=1).describe())
 
 # add X
 df_without_y = df_numeric[df_numeric['Variable'] != 'wynagrodzenia']
-X = df_without_y.sort_values(by=['Variable', 'Year'])
-print(X)
+X = df_without_y.sort_values(by='Variable')
+# print(X)
+
+# create random division of column indexes into training and test sets
+np.random.seed(73)
+total_columns = X.shape[1] - 2  # number of columns in data frame X without column of variables and dates
+indices = np.arange(2, total_columns + 2)  # indexes of columns with data, without first column of variables and dates
+np.random.shuffle(indices)  # index shuffling
+train_size = int(0.75 * total_columns)
+
+# division of the indexes into 30 training and test sets
+train_indices_list = [indices[i:i+train_size] for i in range(0, total_columns, train_size)]
+test_indices_list = [np.setdiff1d(indices, train_indices) for train_indices in train_indices_list]
+
+# Create 30 training and test sets for y and X
+train_y_list = [y.iloc[:, train_indices.tolist()] for train_indices in train_indices_list]
+test_y_list = [y.iloc[:, test_indices.tolist()] for test_indices in test_indices_list]
+train_X_list = [X.iloc[:, train_indices.tolist()] for train_indices in train_indices_list]
+test_X_list = [X.iloc[:, test_indices.tolist()] for test_indices in test_indices_list]
+
+print(train_X_list[0])
+print(train_y_list[0])
