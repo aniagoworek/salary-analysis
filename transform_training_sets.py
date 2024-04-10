@@ -17,7 +17,7 @@ def remove_sets_with_many_missing_values(training_sets):
             cleaned_training_sets.append((X_train, y_train))
 
     removed_sets = list(set(range(len(training_sets))) - set(range(len(cleaned_training_sets))))
-    print(f'Removed sets: {removed_sets}')
+    # print(f'Removed sets: {removed_sets}')
     return cleaned_training_sets
 
 def standardize_data(training_sets):
@@ -125,8 +125,8 @@ def inverse_standardization(filled_training_sets, training_sets, scalers):
         y_train_inverse.columns = y_train_columns
         inversed_training_sets.append((X_train_inverse, y_train_inverse))
 
-    print(f'\nOdwrocona standaryzacja X: {inversed_training_sets[6][0]}')
-    print(f'\nOdwrocona standaryzacja y: {inversed_training_sets[6][1]}')
+    # print(f'\nOdwrocona standaryzacja X: {inversed_training_sets[6][0]}')
+    # print(f'\nOdwrocona standaryzacja y: {inversed_training_sets[6][1]}')
     return inversed_training_sets
 
 # Standarized filled training data for neural network
