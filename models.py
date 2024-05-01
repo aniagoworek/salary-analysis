@@ -1,105 +1,74 @@
 from sklearn.ensemble import RandomForestRegressor
 import numpy as np
-from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import BaggingRegressor
-import tensorflow as tf
+from xgboost import XGBRegressor
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 
 
-def tune_bagging_hyperparameters(inversed_filled_training_sets, k, n):
-    param_grid = {
-        'n_estimators': [50, 100, 200],
-        'max_samples': [0.5, 0.7, 1.0],
-        'max_features': [0.5, 0.7, 1.0],
-        'bootstrap': [True, False],
-        'bootstrap_features': [True, False]
-    }
-    model = BaggingRegressor()
-    best_params = []
-
-    grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=n-k)
+def model_boost(final_training_sets, final_testing_sets, k, n, max_depth, max_features, min_samples_leaf, min_samples_split, n_estimators):
+    model = GradientBoostingRegressor(max_depth = max_depth, max_features = max_features, min_samples_leaf = min_samples_leaf, min_samples_split = min_samples_split, n_estimators = n_estimators)
 
     for i in range(k, n):
-        X_train = inversed_filled_training_sets[i][0]
-        y_train = inversed_filled_training_sets[i][1].values.ravel()
-        grid_search.fit(X_train, y_train)
-
-        best_params.append(grid_search.best_params_)
-
-        print("Best Parameters:")
-        print(grid_search.best_params_)
-
-    return best_params
-
-
-def tune_rf_hyperparameters(inversed_filled_training_sets, k, n):
-    param_grid = {
-        'n_estimators': [50, 100, 200],
-        'max_depth': [None, 5, 10, 15, 20],
-        'min_samples_split': [2, 5, 10, 15, 20],
-    }
-    model = RandomForestRegressor()
-    best_params = []
-
-    grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=n-k)
-
-    for i in range(k, n):
-        X_train = inversed_filled_training_sets[i][0]
-        y_train = inversed_filled_training_sets[i][1].values.ravel()
-        grid_search.fit(X_train, y_train)
-
-        best_params.append(grid_search.best_params_)
-
-        print("Best Parameters:")
-        print(grid_search.best_params_)
-
-    return best_params
-
-
-def find_optimal_hyperparameters(inversed_filled_training_sets, k, n):
-    param_grid = {
-        'n_estimators': range(30, 301, 10),
-        'max_depth': [None, 5, 10, 15, 20],
-        'min_samples_split': [2, 5, 10, 15, 20],
-        'min_samples_leaf': [1, 2, 3, 4, 5],
-        'max_features': ['1.0', 'sqrt', 'log2']
-    }
-    model = GradientBoostingRegressor()
-    best_params = []
-
-    grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=n-k)
-
-    X_train = inversed_filled_training_sets[k][0]
-    y_train = inversed_filled_training_sets[k][1].values.ravel()
-    grid_search.fit(X_train, y_train)
-
-    best_params.append(grid_search.best_params_)
-
-    print("Best Parameters:")
-    print(grid_search.best_params_)
-
-    return best_params
-
-
-def model_rf(inversed_filled_training_sets, inversed_filled_testing_sets, k, n, n_estimators, max_depth, min_samples_split):
-    model = RandomForestRegressor(n_estimators = n_estimators, max_depth = max_depth, min_samples_split = min_samples_split)
-
-    for i in range(k, n):
-        X_train = inversed_filled_training_sets[i][0]
-        y_train = inversed_filled_training_sets[i][1].values.ravel()
+        X_train = final_training_sets[i][0]
+        y_train = final_training_sets[i][1].values.ravel()
         model.fit(X_train, y_train)
 
     for i in range(k, n):
-        X_test = inversed_filled_testing_sets[i][0]
-        y_test = inversed_filled_testing_sets[i][1].values.ravel()
+        X_test = final_testing_sets[i][0]
+        y_test = final_testing_sets[i][1].values.ravel()
+        predictions = model.predict(X_test)
+
+    feature_importances = []
+    for i in range(k, n):
+        X_test = final_testing_sets[i][0]
+        feature_importances.append(model.feature_importances_)
+    median_importances = np.median(feature_importances, axis=0)
+    variable_names = final_training_sets[k][0].columns
+
+    MAE_percent = []
+
+    for i in range(k, n):
+        X_test = final_testing_sets[i][0]
+        y_test = final_testing_sets[i][1].values.ravel()
+        predictions = model.predict(X_test)
+        error = np.mean(np.abs(y_test - predictions))
+
+        mean_y_true = np.mean(y_test)
+        error_percent = (error / mean_y_true) * 100
+    
+        MAE_percent.append(error_percent)
+
+    median_error = np.median(error_percent)
+    print("\nboosting")
+    print(f"Median Error: {median_error}%")
+
+    # print("Median Importance:")
+    # sorted_importances = sorted(zip(variable_names, median_importances), key=lambda x: x[1], reverse=True)
+    # for name, importance in sorted_importances:
+    #     print(f"{name}: {importance}")
+
+    return model, MAE_percent, median_importances, variable_names
+
+
+def model_rf(final_training_sets, ifinal_testing_sets, k, n, n_estimators, max_depth, min_samples_split):
+    model = RandomForestRegressor(n_estimators = n_estimators, max_depth = max_depth, min_samples_split = min_samples_split)
+
+    for i in range(k, n):
+        X_train = final_training_sets[i][0]
+        y_train = final_training_sets[i][1].values.ravel()
+        model.fit(X_train, y_train)
+
+    for i in range(k, n):
+        X_test = ifinal_testing_sets[i][0]
+        y_test = ifinal_testing_sets[i][1].values.ravel()
         predictions = model.predict(X_test)
 
     errors = []
     for i in range(k, n):
-        X_test = inversed_filled_testing_sets[i][0]
-        y_test = inversed_filled_testing_sets[i][1].values.ravel()
+        X_test = ifinal_testing_sets[i][0]
+        y_test = ifinal_testing_sets[i][1].values.ravel()
         predictions = model.predict(X_test)
         error = np.mean(np.abs((y_test - predictions) / y_test)) * 100
         errors.append(error)
@@ -110,78 +79,23 @@ def model_rf(inversed_filled_training_sets, inversed_filled_testing_sets, k, n, 
     return model, errors
 
 
-def model_boost(inversed_filled_training_sets, inversed_filled_testing_sets, k, n):
-    model = GradientBoostingRegressor()
-
-    for i in range(k, n):
-        X_train = inversed_filled_training_sets[i][0]
-        y_train = inversed_filled_training_sets[i][1].values.ravel()
-        model.fit(X_train, y_train)
-
-    for i in range(k, n):
-        X_test = inversed_filled_testing_sets[i][0]
-        y_test = inversed_filled_testing_sets[i][1].values.ravel()
-        predictions = model.predict(X_test)
-
-    # feature_importances = []
-    # for i in range(k, n):
-    #     X_test = inversed_filled_testing_sets[i][0]
-    #     feature_importances.append(model.feature_importances_)
-    # median_importance = np.median(feature_importances, axis=0)
-    # variable_names = inversed_filled_training_sets[k][0].columns
-    # print("\nFeature Importances - boosting:")
-    # sorted_importances = sorted(zip(variable_names, median_importance), key=lambda x: x[1], reverse=True)
-    # for name, importance in sorted_importances:
-    #     print(f"{name}: {importance}")
-
-        # Feature Importances - boosting
-        # plt.figure(figsize=(10, 6))
-        # plt.bar(variable_names, median_importance)
-        # plt.title('Feature Importances - Boosting')
-        # plt.xlabel('Variable')
-        # plt.ylabel('Importance')
-        # plt.xticks(rotation=90)
-        # plt.savefig(f'feature_importance_plot{i - k + 2}.svg', format='svg')
-        # plt.show()
-
-    errors = []
-    for i in range(k, n):
-        X_test = inversed_filled_testing_sets[i][0]
-        y_test = inversed_filled_testing_sets[i][1].values.ravel()
-        predictions = model.predict(X_test)
-        error = np.mean(np.abs((y_test - predictions) / y_test)) * 100
-        errors.append(error)
-
-    # Boxplot for errors
-    import matplotlib.pyplot as plt
-    plt.boxplot(errors)
-    plt.title('Error Boxplot')
-    plt.ylabel('Error (%)')
-    plt.show()
-
-    median_error = np.median(errors)
-    print("\nboosting")
-    print(f"Median Error: {median_error}%")
-    return model, errors
-
-
-def model_bagging(inversed_filled_training_sets, inversed_filled_testing_sets, k, n, bootstrap, bootstrap_features, max_features, max_samples, n_estimators):
+def model_bagging(final_training_sets, final_testing_sets, k, n, bootstrap, bootstrap_features, max_features, max_samples, n_estimators):
     model = BaggingRegressor(bootstrap = bootstrap, bootstrap_features= bootstrap_features, max_features = max_features, max_samples = max_samples, n_estimators = n_estimators)
 
     for i in range(k, n):
-        X_train = inversed_filled_training_sets[i][0]
-        y_train = inversed_filled_training_sets[i][1].values.ravel()
+        X_train = final_training_sets[i][0]
+        y_train = final_training_sets[i][1].values.ravel()
         model.fit(X_train, y_train)
 
     for i in range(k, n):
-        X_test = inversed_filled_testing_sets[i][0]
-        y_test = inversed_filled_testing_sets[i][1].values.ravel()
+        X_test = final_testing_sets[i][0]
+        y_test = final_testing_sets[i][1].values.ravel()
         predictions = model.predict(X_test)
     
     errors = []
     for i in range(k, n):
-        X_test = inversed_filled_testing_sets[i][0]
-        y_test = inversed_filled_testing_sets[i][1].values.ravel()
+        X_test = final_testing_sets[i][0]
+        y_test = final_testing_sets[i][1].values.ravel()
         predictions = model.predict(X_test)
         error = np.mean(np.abs((y_test - predictions) / y_test)) * 100
         errors.append(error)
@@ -229,3 +143,36 @@ def model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets,
     return model, errors
 
 
+def model_xgboost(final_training_sets, final_testing_sets, k, n, max_depth, learning_rate, subsample, colsample_bytree, n_estimators):
+    model = XGBRegressor(max_depth=max_depth, learning_rate=learning_rate, subsample=subsample, colsample_bytree=colsample_bytree, n_estimators=n_estimators)
+
+    for i in range(k, n):
+        X_train = final_training_sets[i][0]
+        y_train = final_training_sets[i][1].values.ravel()
+        model.fit(X_train, y_train)
+
+    feature_importances = []
+    for i in range(k, n):
+        X_test = final_testing_sets[i][0]
+        feature_importances.append(model.feature_importances_)
+    median_importances = np.median(feature_importances, axis=0)
+    variable_names = final_training_sets[k][0].columns
+
+    MAE_percent = []
+
+    for i in range(k, n):
+        X_test = final_testing_sets[i][0]
+        y_test = final_testing_sets[i][1].values.ravel()
+        predictions = model.predict(X_test)
+        error = np.mean(np.abs(y_test - predictions))
+
+        mean_y_true = np.mean(y_test)
+        error_percent = (error / mean_y_true) * 100
+    
+        MAE_percent.append(error_percent)
+
+    median_error = np.median(MAE_percent)
+    print("\nXGBoost")
+    print(f"Median Error: {median_error}")
+
+    return model, MAE_percent, median_importances, variable_names
