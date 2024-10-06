@@ -127,7 +127,6 @@ def model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets,
         y_test = standarized_filled_testing_sets[i][1].values.ravel()
         predictions = model.predict(X_test)
 
-
     errors = []
     for i in range(k, n):
         X_test = standarized_filled_testing_sets[i][0]
@@ -158,21 +157,28 @@ def model_xgboost(final_training_sets, final_testing_sets, k, n, max_depth, lear
     median_importances = np.median(feature_importances, axis=0)
     variable_names = final_training_sets[k][0].columns
 
-    MAE_percent = []
+    MAPE = []
 
     for i in range(k, n):
         X_test = final_testing_sets[i][0]
         y_test = final_testing_sets[i][1].values.ravel()
         predictions = model.predict(X_test)
-        error = np.mean(np.abs(y_test - predictions))
+        error = np.mean(np.abs((y_test - predictions) / y_test))
+        MAPE.append(error)
 
-        mean_y_true = np.mean(y_test)
-        error_percent = (error / mean_y_true) * 100
-    
-        MAE_percent.append(error_percent)
+    r2_scores = []
+    for i in range(k, n):
+        X_test = final_testing_sets[i][0]
+        y_test = final_testing_sets[i][1].values.ravel()
+        predictions = model.predict(X_test)
+        r2_score = model.score(X_test, y_test)
+        r2_scores.append(r2_score)
 
-    median_error = np.median(MAE_percent)
+    median_r2_score = np.median(r2_scores)
+    # print("\nR2 Scores")
+    # print(f"Median R2 Score: {median_r2_score}")
+    median_error = np.median(MAPE)
     print("\nXGBoost")
     print(f"Median Error: {median_error}")
 
-    return model, MAE_percent, median_importances, variable_names
+    return model, MAPE, median_importances, variable_names, r2_scores

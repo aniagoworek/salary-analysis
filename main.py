@@ -2,7 +2,7 @@ from import_data import import_data, transform_data, split_data
 from transform_data_sets import remove_sets_with_many_missing_values, standardize_data, standardize_testing_sets, fill_blanks_with_median, find_optimal_k, fill_blanks_with_knn, cross_validate_filled_sets, inverse_standardization, standarized_filled_sets_to_df
 from tune_models_parameters import tune_rf_parameters, tune_bagging_parameters, tune_boosting_parameters, tune_cnn_parameters, tune_xgboost_parameters, helper_function, Pool, partial
 from models import model_boost, model_rf, model_bagging, model_cnn, model_xgboost
-from visualization import plot_all_errors, plot_feature_importances
+from visualization import plot_all_errors, plot_all_r2,  plot_feature_importances
 
 
 if __name__ == '__main__':
@@ -16,9 +16,8 @@ if __name__ == '__main__':
     optimal_k = find_optimal_k(training_sets_filled)
     training_sets_filled_knn = fill_blanks_with_knn(training_sets_filled, optimal_k)
     mse_values_trainig_set = cross_validate_filled_sets(training_sets_filled_knn)
-    final_training_sets = inverse_standardization(training_sets_filled_knn, training_sets, scalers) # do lasow
-    standarized_filled_training_sets = standarized_filled_sets_to_df(training_sets_filled, training_sets) # do sieci neuronowych
-
+    final_training_sets = inverse_standardization(training_sets_filled_knn, training_sets, scalers) # for forest
+    standarized_filled_training_sets = standarized_filled_sets_to_df(training_sets_filled, training_sets) # for neural network
     testing_sets = remove_sets_with_many_missing_values(testing_sets)
     standardized_testing_sets = standardize_testing_sets(testing_sets, scalers)
     testing_sets_filled = fill_blanks_with_knn(standardized_testing_sets, optimal_k)
@@ -70,14 +69,25 @@ if __name__ == '__main__':
     cnn_2016_2021, cnn_errors_2016_2017 = model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k = 120, n = 149)
     cnn_2016_2022, cnn_errors_2016_2017 = model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k = 150, n = 179)
 
-    xgb_2016_2017, xgb_errors_2016_2017, xgb_feature_2016_2017, variables_names_2016_2017 = model_xgboost(final_training_sets, final_testing_sets, k = 0, n = 4, max_depth = 3, learning_rate = 0.1, subsample = 0.8, colsample_bytree = 1.0, n_estimators = 100)
-    xgb_2016_2018, xgb_errors_2016_2018, xgb_feature_2016_2018, variables_names_2016_2018 = model_xgboost(final_training_sets, final_testing_sets, k = 5, n = 9, max_depth = 3, learning_rate = 0.1, subsample = 0.8, colsample_bytree = 1.0, n_estimators = 100)
-    xgb_2016_2019, xgb_errors_2016_2019, xgb_feature_2016_2019, variables_names_2016_2019 = model_xgboost(final_training_sets, final_testing_sets, k = 10, n = 14, max_depth = 3, learning_rate = 0.1, subsample = 1.0, colsample_bytree = 0.8, n_estimators = 200)
-    xgb_2016_2020, xgb_errors_2016_2020, xgb_feature_2016_2020, variables_names_2016_2020 = model_xgboost(final_training_sets, final_testing_sets, k = 15, n = 19, max_depth = 3, learning_rate = 0.1, subsample = 1.0, colsample_bytree = 0.9, n_estimators = 200)
-    xgb_2016_2021, xgb_errors_2016_2021, xgb_feature_2016_2021, variables_names_2016_2021 = model_xgboost(final_training_sets, final_testing_sets, k = 20, n = 24, max_depth = 5, learning_rate = 0.3, subsample = 0.9, colsample_bytree = 0.9, n_estimators = 200)
-    xgb_2016_2022, xgb_errors_2016_2022, xgb_feature_2016_2022, variables_names_2016_2022 = model_xgboost(final_training_sets, final_testing_sets, k = 25, n = 29, max_depth = 5, learning_rate = 0.3, subsample = 0.9, colsample_bytree = 0.9, n_estimators = 200)
+    xgb_2016_2017, xgb_errors_2016_2017, xgb_feature_2016_2017, variables_names_2016_2017, r2_2016_2017 = model_xgboost(final_training_sets, final_testing_sets, k = 0, n = 29, max_depth = 3, learning_rate = 0.1, subsample = 0.8, colsample_bytree = 1.0, n_estimators = 100)
+    xgb_2016_2018, xgb_errors_2016_2018, xgb_feature_2016_2018, variables_names_2016_2018, r2_2016_2018 = model_xgboost(final_training_sets, final_testing_sets, k = 30, n = 59, max_depth = 3, learning_rate = 0.1, subsample = 0.8, colsample_bytree = 1.0, n_estimators = 100)
+    xgb_2016_2019, xgb_errors_2016_2019, xgb_feature_2016_2019, variables_names_2016_2019, r2_2016_2019 = model_xgboost(final_training_sets, final_testing_sets, k = 60, n = 89, max_depth = 3, learning_rate = 0.1, subsample = 1.0, colsample_bytree = 0.8, n_estimators = 200)
+    xgb_2016_2020, xgb_errors_2016_2020, xgb_feature_2016_2020, variables_names_2016_2020, r2_2016_2020 = model_xgboost(final_training_sets, final_testing_sets, k = 90, n = 119, max_depth = 3, learning_rate = 0.1, subsample = 0.9, colsample_bytree = 0.9, n_estimators = 170)
+    xgb_2016_2021, xgb_errors_2016_2021, xgb_feature_2016_2021, variables_names_2016_2021, r2_2016_2021 = model_xgboost(final_training_sets, final_testing_sets, k = 120, n = 149, max_depth = 5, learning_rate = 0.1, subsample = 0.7, colsample_bytree = 0.8, n_estimators = 150)
+    xgb_2016_2022, xgb_errors_2016_2022, xgb_feature_2016_2022, variables_names_2016_2022, r2_2016_2022 = model_xgboost(final_training_sets, final_testing_sets, k = 150, n = 179, max_depth = 5, learning_rate = 0.1, subsample = 0.8, colsample_bytree = 0.8, n_estimators = 150)
 
     boxplots = plot_all_errors(xgb_errors_2016_2017, xgb_errors_2016_2018, xgb_errors_2016_2019, xgb_errors_2016_2020, xgb_errors_2016_2021, xgb_errors_2016_2022)
     
+    # r2 = plot_all_r2(r2_2016_2017, r2_2016_2018, r2_2016_2019, r2_2016_2020, r2_2016_2021, r2_2016_2022)
+    
     for i in range(2017, 2023):
         features = plot_feature_importances(globals()[f"variables_names_2016_{i}"], globals()[f"xgb_feature_2016_{i}"])
+
+
+## TO DO:
+# Przetłumaczyć wszystko na angielski
+# Naprawić remove_sets_with_many_missing_values, potem zrobić, żeby sposród numerów setów usunąć te sety, żeby lata się nie pomieszały
+# Dzielić na zbiory dane bez podziału na X i y? Sprawdzić czy tak się powinno, czy zostawić
+# Zrobić napisy ładne te co są komentarze
+# Usunąć zbędny zahaszowany kod
+# Usunąć błąd R2? Lub zostawić

@@ -17,7 +17,7 @@ def remove_sets_with_many_missing_values(original_sets):
             cleaned_sets.append((X, y))
 
     removed_sets = list(set(range(len(original_sets))) - set(range(len(cleaned_sets))))
-    # print(f'Removed sets: {removed_sets}')
+    print(f'Removed sets: {removed_sets}')
     return cleaned_sets
 
 def standardize_data(training_sets):
@@ -33,11 +33,11 @@ def standardize_data(training_sets):
         standardized_training_sets.append((X_train, y_train))
         scalers.append((X_scaler, y_scaler))
 
-    # print(f'\nStandaryzowane dane X: {standardized_training_sets[6][0]}') # pierwsza liczba: 0-29 = lata 2016-2017, 30-59 = lata 2016-2018, 60-89 = lata 2016-2019, 90-119 = lata 2016-2020, 120-149 = lata 2016-2021, 150-179 = lata 2016-2022
-    # print(f'\nStandaryzowane dane y: {standardized_training_sets[6][1]}') # pierwsza liczba: 0-29 = lata 2016-2017, 30-59 = lata 2016-2018, 60-89 = lata 2016-2019, 90-119 = lata 2016-2020, 120-149 = lata 2016-2021, 150-179 = lata 2016-2022
+    # print(f'\nStandardized data X: {standardized_training_sets[6][0]}')
+    # print(f'\nStandardized data y: {standardized_training_sets[6][1]}')
     return standardized_training_sets, scalers
 
-# dla zbiorow testowych musi byc funckja, ktora uzywa scalerow z danych treningowych
+# For testing sets use scalers from training sets
 def standardize_testing_sets(testing_sets, scalers):
     standardized_testing_sets = []
 
@@ -48,8 +48,8 @@ def standardize_testing_sets(testing_sets, scalers):
         y_test = y_scaler.transform(testing_sets[i][1].values.reshape(-1, 1)).flatten()  # Use the original y_train as the target
         standardized_testing_sets.append((X_test, y_test))
 
-    # print(f'\nStandaryzowane dane X: {standardized_testing_sets[6][0]}') # pierwsza liczba: 0-29 = lata 2016-2017, 30-59 = lata 2016-2018, 60-89 = lata 2016-2019, 90-119 = lata 2016-2020, 120-149 = lata 2016-2021, 150-179 = lata 2016-2022
-    # print(f'\nStandaryzowane dane y: {standardized_testing_sets[6][1]}') # pierwsza liczba: 0-29 = lata 2016-2017, 30-59 = lata 2016-2018, 60-89 = lata 2016-2019, 90-119 = lata 2016-2020, 120-149 = lata 2016-2021, 150-179 = lata 2016-2022
+    # print(f'\nStandardized data X: {standardized_testing_sets[6][0]}')
+    # print(f'\nStandardized data y: {standardized_testing_sets[6][1]}')
     return standardized_testing_sets
 
 # Fill missing values to find optimal k
@@ -60,8 +60,9 @@ def fill_blanks_with_median(standardized_training_sets):
         X_train, y_train = standardized_training_sets[i]
         X_train = pd.DataFrame(X_train).fillna(pd.DataFrame(X_train).median()).values
         filled_training_sets_median.append((X_train, y_train))
-    # print(f'\nWypelnione mediana X: {filled_training_sets_median[6][0]}')
-    # print(f'\nWypelnione mediana y: {filled_training_sets_median[6][1]}')
+
+    # print(f'\nData X filled in by median: {filled_training_sets_median[6][0]}')
+    # print(f'\nData y filled in by median: {filled_training_sets_median[6][1]}')
     return filled_training_sets_median
 
 def find_optimal_k(filled_training_sets_median):
@@ -98,8 +99,8 @@ def fill_blanks_with_knn(standardized_sets, optimal_k):
         X_filled = imputer.fit_transform(X)
         y_filled = imputer.fit_transform(y.reshape(-1, 1)).flatten()
         filled_sets.append((X_filled, y_filled))
-    # print(f'\nWypelnione przez knn X: {filled_sets[6][0]}')
-    # print(f'\nWypelnione przen knn y: {filled_sets[6][1]}')
+    # print(f'\nX filled by knn: {filled_sets[6][0]}')
+    # print(f'\ny filled by: {filled_sets[6][1]}')
     return filled_sets
 
 # Perform cross-validation to evaluate the performance of KNN imputation
@@ -140,8 +141,8 @@ def inverse_standardization(filled_sets, original_sets, scalers):
         y_inverse.columns = y_columns
         inversed_sets.append((X_inverse, y_inverse))
 
-    # print(f'\nOdwrocona standaryzacja X: {inversed_sets[160][0]}')
-    # print(f'\nOdwrocona standaryzacja y: {inversed_sets[160][1]}')
+    # print(f'\nReversed standardization X: {inversed_sets[160][0]}')
+    # print(f'\nReversed standardization y: {inversed_sets[160][1]}')
     return inversed_sets
 
 # Standarized filled training data for neural network
@@ -158,6 +159,6 @@ def standarized_filled_sets_to_df(filled_sets, original_sets):
         y_df.columns = y_columns
         standarized_filled_sets.append((X_df, y_df))
 
-    # print(f'\nStandaryzowane X jako df: {standarized_filled_sets[6][0]}')
-    # print(f'\nStandaryzowane y jako df: {standarized_filled_sets[6][1]}')
+    # print(f'\nStandarized X as df: {standarized_filled_sets[6][0]}')
+    # print(f'\nStandarized y as df: {standarized_filled_sets[6][1]}')
     return standarized_filled_sets
