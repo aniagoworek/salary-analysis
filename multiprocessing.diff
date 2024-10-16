@@ -1,0 +1,151 @@
+diff --git a/main.py b/main.py
+index 4a910a7..58348e0 100644
+--- a/main.py
++++ b/main.py
+@@ -2,6 +2,19 @@ from transform_data import import_data, transform_data, split_data
+ from transform_training_sets import remove_sets_with_many_missing_values, standardize_data, fill_blanks_with_median, find_optimal_k, fill_blanks_with_knn, cross_validate_filled_sets, inverse_standardization, standarized_filled_training_sets_to_df
+ from transform_test_sets import remove_sets_with_many_missing_values2, standardize_data2, fill_blanks_with_knn2, cross_validate_filled_sets2, inverse_standardization2, standarized_filled_testing_sets_to_df2
+ from models import model_rf, model_boost, model_boost, model_bagging, model_cnn, tune_bagging_hyperparameters, find_optimal_hyperparameters
++from multiprocessing import Pool
++from functools import partial
++import time
++
++
++def helper_function(inversed_filled_training_sets, k):
++    start_time = time.time()
++    print(f"Starting process with k={k} at {time.strftime('%H:%M:%S')}")
++    result = find_optimal_hyperparameters(inversed_filled_training_sets, k)
++    end_time = time.time()
++    elapsed_time = end_time - start_time
++    print(f"Process with k={k} completed in {elapsed_time} seconds.")
++    return result
+ 
+ if __name__ == '__main__':
+     df = import_data()
+@@ -24,44 +37,48 @@ if __name__ == '__main__':
+     inversed_filled_testing_sets = inverse_standardization2(testing_sets_filled, testing_sets, scalers)
+     standarized_filled_testing_sets = standarized_filled_testing_sets_to_df2(testing_sets_filled, testing_sets)
+ 
+-    par_for_models_2016_2017 = tune_bagging_hyperparameters(inversed_filled_training_sets, k = 0, n = 3)
+-    par_for_models_2016_2018 = tune_bagging_hyperparameters(inversed_filled_training_sets, k = 4, n = 6)
+-    par_for_models_2016_2019 = tune_bagging_hyperparameters(inversed_filled_training_sets, k = 7, n = 9)
+-    par_for_models_2016_2020 = tune_bagging_hyperparameters(inversed_filled_training_sets, k = 10, n = 12)
+-    par_for_models_2016_2021 = tune_bagging_hyperparameters(inversed_filled_training_sets, k = 13, n = 15)
+-    par_for_models_2016_2022 = tune_bagging_hyperparameters(inversed_filled_training_sets, k = 16, n = 18)
+-    
+-    par_for_boost_2016_2017 = find_optimal_hyperparameters(inversed_filled_training_sets, inversed_filled_testing_sets, k = 0, n = 29)
+-    par_for_boost_2016_2018 = find_optimal_hyperparameters(inversed_filled_training_sets, inversed_filled_testing_sets, k = 30, n = 59)
+-    par_for_boost_2016_2019 = find_optimal_hyperparameters(inversed_filled_training_sets, inversed_filled_testing_sets, k = 60, n = 89)
+-    par_for_boost_2016_2020 = find_optimal_hyperparameters(inversed_filled_training_sets, inversed_filled_testing_sets, k = 90, n = 119)
+-    par_for_boost_2016_2021 = find_optimal_hyperparameters(inversed_filled_training_sets, inversed_filled_testing_sets, k = 120, n = 149)
+-    par_for_boost_2016_2022 = find_optimal_hyperparameters(inversed_filled_training_sets, inversed_filled_testing_sets, k = 150, n = 179)
++    # par_for_models_2016_2017 = tune_bagging_hyperparameters(inversed_filled_training_sets, k = 0, n = 3)
++    # par_for_models_2016_2018 = tune_bagging_hyperparameters(inversed_filled_training_sets, k = 4, n = 6)
++    # par_for_models_2016_2019 = tune_bagging_hyperparameters(inversed_filled_training_sets, k = 7, n = 9)
++    # par_for_models_2016_2020 = tune_bagging_hyperparameters(inversed_filled_training_sets, k = 10, n = 12)
++    # par_for_models_2016_2021 = tune_bagging_hyperparameters(inversed_filled_training_sets, k = 13, n = 15)
++    # par_for_models_2016_2022 = tune_bagging_hyperparameters(inversed_filled_training_sets, k = 16, n = 18)
++
++    with Pool(processes=8) as pool:
++        partial_function = partial(helper_function, inversed_filled_training_sets)
++        par_for_boosting = pool.map(partial_function, range(0, 30))
++
++    #par_for_boost_2016_2017 = find_optimal_hyperparameters(inversed_filled_training_sets, k = 0, n = 29)
++    #par_for_boost_2016_2018 = find_optimal_hyperparameters(inversed_filled_training_sets, k = 30, n = 59)
++    #par_for_boost_2016_2019 = find_optimal_hyperparameters(inversed_filled_training_sets, k = 60, n = 89)
++    #par_for_boost_2016_2020 = find_optimal_hyperparameters(inversed_filled_training_sets, k = 90, n = 119)
++    #par_for_boost_2016_2021 = find_optimal_hyperparameters(inversed_filled_training_sets, k = 120, n = 149)
++    #par_for_boost_2016_2022 = find_optimal_hyperparameters(inversed_filled_training_sets, k = 150, n = 179)
+     
+-    rf_2016_2017 = model_rf(inversed_filled_training_sets, inversed_filled_testing_sets, k = 0, n = 29, n_estimators = 200, max_depth = 10, min_samples_split = 5)
+-    rf_2016_2018 = model_rf(inversed_filled_training_sets, inversed_filled_testing_sets, k = 30, n = 59, n_estimators = 200, max_depth = None, min_samples_split = 2)
+-    rf_2016_2019 = model_rf(inversed_filled_training_sets, inversed_filled_testing_sets, k = 60, n = 89, n_estimators = 50, max_depth = 5, min_samples_split = 10)
+-    rf_2016_2020 = model_rf(inversed_filled_training_sets, inversed_filled_testing_sets, k = 90, n = 119, n_estimators = 100, max_depth = 10, min_samples_split = 5)
+-    rf_2016_2021 = model_rf(inversed_filled_training_sets, inversed_filled_testing_sets, k = 120, n = 149, n_estimators = 50, max_depth = 10, min_samples_split = 2)
+-    rf_2016_2022 = model_rf(inversed_filled_training_sets, inversed_filled_testing_sets, k = 150, n = 179, n_estimators = 200, max_depth = None, min_samples_split = 5)
++    # rf_2016_2017 = model_rf(inversed_filled_training_sets, inversed_filled_testing_sets, k = 0, n = 29, n_estimators = 200, max_depth = 10, min_samples_split = 5)
++    # rf_2016_2018 = model_rf(inversed_filled_training_sets, inversed_filled_testing_sets, k = 30, n = 59, n_estimators = 200, max_depth = None, min_samples_split = 2)
++    # rf_2016_2019 = model_rf(inversed_filled_training_sets, inversed_filled_testing_sets, k = 60, n = 89, n_estimators = 50, max_depth = 5, min_samples_split = 10)
++    # rf_2016_2020 = model_rf(inversed_filled_training_sets, inversed_filled_testing_sets, k = 90, n = 119, n_estimators = 100, max_depth = 10, min_samples_split = 5)
++    # rf_2016_2021 = model_rf(inversed_filled_training_sets, inversed_filled_testing_sets, k = 120, n = 149, n_estimators = 50, max_depth = 10, min_samples_split = 2)
++    # rf_2016_2022 = model_rf(inversed_filled_training_sets, inversed_filled_testing_sets, k = 150, n = 179, n_estimators = 200, max_depth = None, min_samples_split = 5)
+ 
+-    boost_2016_2017 = model_boost(inversed_filled_training_sets, inversed_filled_testing_sets, k = 0, n = 29)
+-    boost_2016_2018 = model_boost(inversed_filled_training_sets, inversed_filled_testing_sets, k = 30, n = 59)
+-    boost_2016_2019 = model_boost(inversed_filled_training_sets, inversed_filled_testing_sets, k = 60, n = 89)
+-    boost_2016_2020 = model_boost(inversed_filled_training_sets, inversed_filled_testing_sets, k = 90, n = 119)
+-    boost_2016_2021 = model_boost(inversed_filled_training_sets, inversed_filled_testing_sets, k = 120, n = 149)
+-    boost_2016_2022 = model_boost(inversed_filled_training_sets, inversed_filled_testing_sets, k = 150, n = 179)
++    # boost_2016_2017 = model_boost(inversed_filled_training_sets, inversed_filled_testing_sets, k = 0, n = 29)
++    # boost_2016_2018 = model_boost(inversed_filled_training_sets, inversed_filled_testing_sets, k = 30, n = 59)
++    # boost_2016_2019 = model_boost(inversed_filled_training_sets, inversed_filled_testing_sets, k = 60, n = 89)
++    # boost_2016_2020 = model_boost(inversed_filled_training_sets, inversed_filled_testing_sets, k = 90, n = 119)
++    # boost_2016_2021 = model_boost(inversed_filled_training_sets, inversed_filled_testing_sets, k = 120, n = 149)
++    # boost_2016_2022 = model_boost(inversed_filled_training_sets, inversed_filled_testing_sets, k = 150, n = 179)
+ 
+-    bagging_2016_2017 = model_bagging(inversed_filled_training_sets, inversed_filled_testing_sets, k = 0, n = 29, bootstrap = True, bootstrap_features = False, max_features = 1.0, max_samples = 1.0, n_estimators = 50)
+-    bagging_2016_2018 = model_bagging(inversed_filled_training_sets, inversed_filled_testing_sets, k = 30, n = 59, bootstrap = False, bootstrap_features = False, max_features = 1.0, max_samples = 0.7, n_estimators = 50)
+-    bagging_2016_2019 = model_bagging(inversed_filled_training_sets, inversed_filled_testing_sets, k = 60, n = 89, bootstrap = False, bootstrap_features = False, max_features = 0.7, max_samples = 0.7, n_estimators = 100)
+-    bagging_2016_2020 = model_bagging(inversed_filled_training_sets, inversed_filled_testing_sets, k = 90, n = 119, bootstrap = True, bootstrap_features = False, max_features = 1.0, max_samples = 1.0, n_estimators = 100)
+-    bagging_2016_2021 = model_bagging(inversed_filled_training_sets, inversed_filled_testing_sets, k = 120, n = 149, bootstrap = True, bootstrap_features = False, max_features = 1.0, max_samples = 1.0, n_estimators = 50)
+-    bagging_2016_2022 = model_bagging(inversed_filled_training_sets, inversed_filled_testing_sets, k = 150, n = 179, bootstrap = False, bootstrap_features = False, max_features = 0.7, max_samples = 0.5, n_estimators = 100)
++    # bagging_2016_2017 = model_bagging(inversed_filled_training_sets, inversed_filled_testing_sets, k = 0, n = 29, bootstrap = True, bootstrap_features = False, max_features = 1.0, max_samples = 1.0, n_estimators = 50)
++    # bagging_2016_2018 = model_bagging(inversed_filled_training_sets, inversed_filled_testing_sets, k = 30, n = 59, bootstrap = False, bootstrap_features = False, max_features = 1.0, max_samples = 0.7, n_estimators = 50)
++    # bagging_2016_2019 = model_bagging(inversed_filled_training_sets, inversed_filled_testing_sets, k = 60, n = 89, bootstrap = False, bootstrap_features = False, max_features = 0.7, max_samples = 0.7, n_estimators = 100)
++    # bagging_2016_2020 = model_bagging(inversed_filled_training_sets, inversed_filled_testing_sets, k = 90, n = 119, bootstrap = True, bootstrap_features = False, max_features = 1.0, max_samples = 1.0, n_estimators = 100)
++    # bagging_2016_2021 = model_bagging(inversed_filled_training_sets, inversed_filled_testing_sets, k = 120, n = 149, bootstrap = True, bootstrap_features = False, max_features = 1.0, max_samples = 1.0, n_estimators = 50)
++    # bagging_2016_2022 = model_bagging(inversed_filled_training_sets, inversed_filled_testing_sets, k = 150, n = 179, bootstrap = False, bootstrap_features = False, max_features = 0.7, max_samples = 0.5, n_estimators = 100)
+ 
+-    cnn_2016_2017 = model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k = 0, n = 29)
+-    cnn_2016_2018 = model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k = 30, n = 59)
+-    cnn_2016_2019 = model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k = 60, n = 89)
+-    cnn_2016_2020 = model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k = 90, n = 119)
+-    cnn_2016_2021 = model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k = 120, n = 149)
+-    cnn_2016_2022 = model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k = 150, n = 179)
++    # cnn_2016_2017 = model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k = 0, n = 29)
++    # cnn_2016_2018 = model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k = 30, n = 59)
++    # cnn_2016_2019 = model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k = 60, n = 89)
++    # cnn_2016_2020 = model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k = 90, n = 119)
++    # cnn_2016_2021 = model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k = 120, n = 149)
++    # cnn_2016_2022 = model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k = 150, n = 179)
+diff --git a/models.py b/models.py
+index 0564c11..b6e27c9 100644
+--- a/models.py
++++ b/models.py
+@@ -58,18 +58,17 @@ def tune_rf_hyperparameters(inversed_filled_training_sets, k, n):
+     return best_params
+ 
+ 
+-def find_optimal_hyperparameters(inversed_filled_training_sets, k, n):
++def find_optimal_hyperparameters(inversed_filled_training_sets, k):
+     param_grid = {
+-        'n_estimators': range(30, 301, 10),
+-        'max_depth': [None, 5, 10, 15, 20],
+-        'min_samples_split': [2, 5, 10, 15, 20],
++        'n_estimators': range(30, 271, 30),
++        'max_depth': [None, 5, 10, 20],
++        'min_samples_split': [2, 5, 10, 15],
+         'min_samples_leaf': [1, 2, 3, 4, 5],
+-        'max_features': ['1.0', 'sqrt', 'log2']
+     }
+     model = GradientBoostingRegressor()
+     best_params = []
+ 
+-    grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=n-k)
++    grid_search = GridSearchCV(estimator=model, param_grid=param_grid)
+ 
+     X_train = inversed_filled_training_sets[k][0]
+     y_train = inversed_filled_training_sets[k][1].values.ravel()
+diff --git a/transform_data.py b/transform_data.py
+index f40fecd..2f399c5 100644
+--- a/transform_data.py
++++ b/transform_data.py
+@@ -33,7 +33,7 @@ def split_data(df_2016_2017, df_2016_2018, df_2016_2019, df_2016_2020, df_2016_2
+         X = df_year.drop(columns=[f'wynagrodzenia - {df_year.columns[-1][-4:]}'])
+         y = df_year[f'wynagrodzenia - {df_year.columns[-1][-4:]}']
+ 
+-        for _ in range(30): # zmienic na 30
++        for _ in range(5): # zmienic na 30
+             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
+             training_sets.append((X_train, y_train))
+             testing_sets.append((X_test, y_test))
