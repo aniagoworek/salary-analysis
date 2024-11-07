@@ -8,18 +8,6 @@ import matplotlib.pyplot as plt
 from sklearn.impute import KNNImputer
 
 
-def remove_sets_with_many_missing_values(original_sets):
-    cleaned_sets = []
-
-    for X, y in original_sets:
-        missing_values_percentage = (X.isnull().sum().sum() + y.isnull().sum().sum()) / (X.size + y.size)
-        if missing_values_percentage <= 0.20:
-            cleaned_sets.append((X, y))
-
-    removed_sets = list(set(range(len(original_sets))) - set(range(len(cleaned_sets))))
-    print(f'Removed sets: {removed_sets}')
-    return cleaned_sets
-
 def standardize_data(training_sets):
     standardized_training_sets = []
     scalers = []

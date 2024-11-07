@@ -8,9 +8,8 @@ def import_data():
     return df
 
 def transform_data(df):
-    df['Miejsce'] = df['Miejsce'].astype('category')
-    df.drop(['Kod powiatu'], axis=1, inplace=True)
-    df.columns = df.columns.str.replace(r'wynagrodzenia', 'salary', regex=True)
+    df['location'] = df['location'].astype('category')
+    df.drop(['district code'], axis=1, inplace=True)
     df = df.select_dtypes(include=[np.number])
 
     print(df)

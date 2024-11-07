@@ -9,8 +9,8 @@ if __name__ == '__main__':
     df = import_data()
     df_2016_2017, df_2016_2018, df_2016_2019, df_2016_2020, df_2016_2021, df_2016_2022 = transform_data(df)
     testing_sets, training_sets = split_data(df_2016_2017, df_2016_2018, df_2016_2019, df_2016_2020, df_2016_2021, df_2016_2022)
-    
-    training_sets = remove_sets_with_many_missing_values(training_sets)
+
+    # training_sets = remove_sets_with_many_missing_values(training_sets)
     standardized_training_sets, scalers = standardize_data(training_sets)
     training_sets_filled = fill_blanks_with_median(standardized_training_sets)
     optimal_k = find_optimal_k(training_sets_filled)
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     mse_values_trainig_set = cross_validate_filled_sets(training_sets_filled_knn)
     final_training_sets = inverse_standardization(training_sets_filled_knn, training_sets, scalers) # for forest
     standarized_filled_training_sets = standarized_filled_sets_to_df(training_sets_filled, training_sets) # for neural network
-    testing_sets = remove_sets_with_many_missing_values(testing_sets)
+    # testing_sets = remove_sets_with_many_missing_values(testing_sets)
     standardized_testing_sets = standardize_testing_sets(testing_sets, scalers)
     testing_sets_filled = fill_blanks_with_knn(standardized_testing_sets, optimal_k)
     mse_values_testing_set = cross_validate_filled_sets(testing_sets_filled)
@@ -85,8 +85,6 @@ if __name__ == '__main__':
 
 
 ## TO DO:
-# Naprawić remove_sets_with_many_missing_values, potem zrobić, żeby sposród numerów setów usunąć te sety, żeby lata się nie pomieszały
 # Dzielić na zbiory dane bez podziału na X i y? Sprawdzić czy tak się powinno, czy zostawić
 # Zrobić napisy ładne te co są komentarze, dodać tam lata, żeby dało się rozróżnić
 # Usunąć zbędny zahaszowany kod
-# Zamienic wszystkie slowa w 'data' na angielskie
