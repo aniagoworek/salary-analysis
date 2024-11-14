@@ -34,7 +34,7 @@ def model_boost(final_training_sets, final_testing_sets, k, n, max_depth, max_fe
         y_test = final_testing_sets[i][1].values.ravel()
         predictions = model.predict(X_test)
         error = np.mean(np.abs((y_test - predictions) / y_test))
-    
+
         MAPE.append(error)
 
     median_error = np.median(MAPE)
@@ -49,7 +49,7 @@ def model_boost(final_training_sets, final_testing_sets, k, n, max_depth, max_fe
     return model, MAPE, median_importances, variable_names
 
 
-def model_rf(final_training_sets, ifinal_testing_sets, k, n, n_estimators, max_depth, min_samples_split):
+def model_rf(final_training_sets, final_testing_sets, k, n, n_estimators, max_depth, min_samples_split):
     model = RandomForestRegressor(n_estimators = n_estimators, max_depth = max_depth, min_samples_split = min_samples_split)
 
     for i in range(k, n):
@@ -58,14 +58,21 @@ def model_rf(final_training_sets, ifinal_testing_sets, k, n, n_estimators, max_d
         model.fit(X_train, y_train)
 
     for i in range(k, n):
-        X_test = ifinal_testing_sets[i][0]
-        y_test = ifinal_testing_sets[i][1].values.ravel()
+        X_test = final_testing_sets[i][0]
+        y_test = final_testing_sets[i][1].values.ravel()
         predictions = model.predict(X_test)
+
+    feature_importances = []
+    for i in range(k, n):
+        X_test = final_testing_sets[i][0]
+        feature_importances.append(model.feature_importances_)
+    median_importances = np.median(feature_importances, axis=0)
+    variable_names = final_training_sets[k][0].columns
 
     MAPE = []
     for i in range(k, n):
-        X_test = ifinal_testing_sets[i][0]
-        y_test = ifinal_testing_sets[i][1].values.ravel()
+        X_test = final_testing_sets[i][0]
+        y_test = final_testing_sets[i][1].values.ravel()
         predictions = model.predict(X_test)
         error = np.mean(np.abs((y_test - predictions) / y_test))
         MAPE.append(error)
@@ -73,10 +80,10 @@ def model_rf(final_training_sets, ifinal_testing_sets, k, n, n_estimators, max_d
     median_error = np.median(MAPE)
     print("\nrandom forest")
     print(f"Median Error: {median_error}")
-    return model, MAPE
+    return model, MAPE, median_importances, variable_names
 
 
-def model_bagging(final_training_sets, final_testing_sets, k, n, bootstrap, bootstrap_features, max_features, max_samples, n_estimators):
+def model_bagg(final_training_sets, final_testing_sets, k, n, bootstrap, bootstrap_features, max_features, max_samples, n_estimators):
     model = BaggingRegressor(bootstrap = bootstrap, bootstrap_features= bootstrap_features, max_features = max_features, max_samples = max_samples, n_estimators = n_estimators)
 
     for i in range(k, n):
@@ -88,7 +95,14 @@ def model_bagging(final_training_sets, final_testing_sets, k, n, bootstrap, boot
         X_test = final_testing_sets[i][0]
         y_test = final_testing_sets[i][1].values.ravel()
         predictions = model.predict(X_test)
-    
+
+    feature_importances = []
+    for i in range(k, n):
+        X_test = final_testing_sets[i][0]
+        feature_importances.append(model.feature_importances_)
+    median_importances = np.median(feature_importances, axis=0)
+    variable_names = final_training_sets[k][0].columns
+
     MAPE = []
     for i in range(k, n):
         X_test = final_testing_sets[i][0]
@@ -102,8 +116,7 @@ def model_bagging(final_training_sets, final_testing_sets, k, n, bootstrap, boot
     print("\nbagging")
     print(f"Median Error: {median_error}")
 
-    return model, MAPE
-
+    return model, MAPE, median_importances, variable_names
 
 def model_cnn(standarized_filled_training_sets, standarized_filled_testing_sets, k , n):
     input_shape = standarized_filled_training_sets[k][0].shape[1]
@@ -163,19 +176,8 @@ def model_xgboost(final_training_sets, final_testing_sets, k, n, max_depth, lear
         error = np.mean(np.abs((y_test - predictions) / y_test))
         MAPE.append(error)
 
-    r2_scores = []
-    for i in range(k, n):
-        X_test = final_testing_sets[i][0]
-        y_test = final_testing_sets[i][1].values.ravel()
-        predictions = model.predict(X_test)
-        r2_score = model.score(X_test, y_test)
-        r2_scores.append(r2_score)
-
-    median_r2_score = np.median(r2_scores)
-    # print("\nR2 Scores")
-    # print(f"Median R2 Score: {median_r2_score}")
     median_error = np.median(MAPE)
     print("\nXGBoost")
     print(f"Median Error: {median_error}")
 
-    return model, MAPE, median_importances, variable_names, r2_scores
+    return model, MAPE, median_importances, variable_names

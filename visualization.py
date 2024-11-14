@@ -24,31 +24,7 @@ def plot_all_errors(*errors):
     ax.get_yaxis().tick_left()
     plt.ylabel('MAPE value', fontsize=12)
     plt.savefig(f'boxplots.svg', format='svg')
-    plt.show()
-
-    return None
-
-def plot_all_r2(*r2_scores):
-    plt.figure(figsize=(12, 8))
-    ax = plt.gca()
-
-    bp = ax.boxplot(r2_scores, patch_artist=True)
-    ax.set_xticklabels(['Model 2016-2017', 'Model 2016-2018', 'Model 2016-2019', 'Model 2016-2020', 'Model 2016-2021', 'Model 2016-2022'], fontsize=12)
-    plt.title("Boxplots for R$^2$ value of model", fontsize=16)
-    colors = plt.cm.Set3(np.linspace(0, 1, len(r2_scores)))
-    for box, color in zip(bp['boxes'], colors):
-        box.set(facecolor=color)
-
-    for median in bp['medians']:
-        median.set(color='black', linewidth=2)
-
-    ax.yaxis.grid(True)
-    ax.tick_params(axis='both', which='both', labelsize=10)
-    ax.get_xaxis().tick_bottom()
-    ax.get_yaxis().tick_left()
-    plt.ylabel('R$^2$ value', fontsize=12)
-    plt.savefig(f'r2_scores_boxplots.svg', format='svg')
-    plt.show()
+    # plt.show()
 
     return None
 
@@ -66,6 +42,6 @@ def plot_feature_importances(variable_names, median_importances):
     plt.grid(axis='x', linestyle='-', alpha=0.7)
     plt.tight_layout()
     plt.savefig(f'feature_importance_plot.svg', format='svg')
-    plt.show()
+    # plt.show()
 
     return None
